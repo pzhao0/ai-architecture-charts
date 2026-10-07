@@ -1,10 +1,21 @@
-# Minio subchart configuration (credentials used by both minio chart and notebook)
+# MinIO subchart configuration (used when pipelineStorage.deployMinio is enabled)
 minio:
   secret:
     user: minio_rag_user
     password: minio_rag_password
     host: minio
     port: "9000"
+
+# S4-backed AWS-compatible storage subchart configuration
+aws-compatible-storage:
+  fullnameOverride: s4
+  s3:
+    accessKeyId: s4admin
+    secretAccessKey: s4secret
+  auth:
+    enabled: false
+  route:
+    enabled: false
 
 notebook:
   create: true
@@ -25,15 +36,16 @@ secret:
 
 # Pipeline storage configuration for DataSciencePipelinesApplication
 pipelineStorage:
-  # Deploy minio as a dependency
+  # Keep MinIO as the default for existing consumers; S4 is available as an opt-in.
   deployMinio: true
+  deployAwsCompatibleStorage: false
   # External storage configuration
   externalStorage:
-    host: "minio"
-    port: "9000"
+    host: "s4"
+    port: "7480"
     bucket: "mlpipeline"
     scheme: "http"
     s3CredentialsSecret:
-      secretName: "minio"
-      accessKey: "user"
-      secretKey: "password"
+      secretName: "s4-credentials"
+      accessKey: "AWS_ACCESS_KEY_ID"
+      secretKey: "AWS_SECRET_ACCESS_KEY"

@@ -26,10 +26,17 @@ spec:
   objectStorage:
     disableHealthCheck: false
     enableExternalRoute: false
-    externalStorage:  # mutually exclusive with minio
+    externalStorage:  # points to the selected bundled storage or caller-provided storage
 {{- $storage := .Values.pipelineStorage.externalStorage | deepCopy }}
-{{- if and .Values.pipelineStorage.deployMinio (eq $storage.host "minio") }}
-{{- $_ := set $storage "host" (printf "%s.%s" $storage.host .Release.Namespace) }}
+{{- if and .Values.pipelineStorage.deployMinio .Values.pipelineStorage.deployAwsCompatibleStorage }}
+{{- fail "pipelineStorage.deployMinio and pipelineStorage.deployAwsCompatibleStorage are mutually exclusive" }}
+{{- end }}
+{{- if .Values.pipelineStorage.deployAwsCompatibleStorage }}
+{{- $_ := set $storage "host" (printf "%s.%s.svc.cluster.local" $storage.host .Release.Namespace) }}
+{{- else if .Values.pipelineStorage.deployMinio }}
+{{- $_ := set $storage "host" (printf "%s.%s" .Values.minio.secret.host .Release.Namespace) }}
+{{- $_ := set $storage "port" .Values.minio.secret.port }}
+{{- $_ := set $storage "s3CredentialsSecret" (dict "secretName" "minio" "accessKey" "user" "secretKey" "password") }}
 {{- end }}
 {{ toYaml $storage | indent 6 }}
   persistenceAgent:

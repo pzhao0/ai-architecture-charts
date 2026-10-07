@@ -1,6 +1,9 @@
 dependencies:
 - name: minio
   repository: https://rh-ai-quickstart.github.io/ai-architecture-charts
-  version: 0.5.1
-digest: sha256:87d041e1135e930ccc2ef9c032723d54755d90bf1aa1feeb27a7460ba8511441
-generated: "2025-11-25T17:15:45.305165-05:00"
+  version: 0.5.5
+- name: aws-compatible-storage
+  repository: https://rh-ai-quickstart.github.io/ai-architecture-charts
+  version: 0.1.0
+digest: sha256:caf5fe7412c5ea85bcd5ec3b3e7abd2038ce1c13cbecbfca3c5880b05c857737
+generated: "2026-10-07T13:20:57.622778-04:00"
