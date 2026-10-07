@@ -48,8 +48,9 @@ helm install configure-pipeline ./helm \
 ```bash
 helm install configure-pipeline ./helm \
   --set pipelineStorage.deployMinio=false \
-  --set pipelineStorage.deployAwsCompatibleStorage=false \
   --set pipelineStorage.externalStorage.host="s3.amazonaws.com" \
+  --set pipelineStorage.externalStorage.port="443" \
+  --set pipelineStorage.externalStorage.scheme="https" \
   --set pipelineStorage.externalStorage.bucket="my-bucket" \
   --set pipelineStorage.externalStorage.s3CredentialsSecret.secretName="aws-credentials"
 ```
@@ -95,13 +96,13 @@ helm install configure-pipeline ./helm \
 |-----------|-------------|---------|
 | `pipelineStorage.deployMinio` | Deploy MinIO as a dependency | `true` |
 | `pipelineStorage.deployAwsCompatibleStorage` | Deploy S4-backed AWS-compatible storage | `false` |
-| `pipelineStorage.externalStorage.host` | Storage service host | `s4` |
-| `pipelineStorage.externalStorage.port` | Storage service port | `7480` |
+| `pipelineStorage.externalStorage.host` | Storage host; bundled MinIO default | `minio` |
+| `pipelineStorage.externalStorage.port` | Storage port; bundled MinIO default | `9000` |
 | `pipelineStorage.externalStorage.bucket` | Storage bucket for pipelines | `mlpipeline` |
 | `pipelineStorage.externalStorage.scheme` | Connection scheme (http/https) | `http` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `s4-credentials` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `AWS_ACCESS_KEY_ID` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `AWS_SECRET_ACCESS_KEY` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `minio` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `user` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `password` |
 
 ### Example values.yaml
 

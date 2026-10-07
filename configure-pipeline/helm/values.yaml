@@ -41,11 +41,11 @@ pipelineStorage:
   deployAwsCompatibleStorage: false
   # External storage configuration
   externalStorage:
-    host: "s4"
-    port: "7480"
+    host: "minio"
+    port: "9000"
     bucket: "mlpipeline"
     scheme: "http"
     s3CredentialsSecret:
-      secretName: "s4-credentials"
-      accessKey: "AWS_ACCESS_KEY_ID"
-      secretKey: "AWS_SECRET_ACCESS_KEY"
+      secretName: "minio"
+      accessKey: "user"
+      secretKey: "password"
