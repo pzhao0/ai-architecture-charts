@@ -5,6 +5,10 @@ minio:
     password: minio_rag_password
     host: minio
     port: "9000"
+  sampleFileUpload:
+    enabled: false
+    bucket: documents
+    urls: []
 
 # S4-backed AWS-compatible storage subchart configuration
 aws-compatible-storage:

@@ -87,6 +87,9 @@ helm install configure-pipeline ./helm \
 | `minio.secret.password` | MinIO password | `minio_rag_password` |
 | `minio.secret.host` | MinIO service host | `minio` |
 | `minio.secret.port` | MinIO service port | `9000` |
+| `minio.sampleFileUpload.enabled` | Create a sample documents bucket and upload configured URLs | `false` |
+| `minio.sampleFileUpload.bucket` | Bucket for sample document uploads | `documents` |
+| `minio.sampleFileUpload.urls` | URLs of sample documents to download and upload | `[]` |
 
 #### Pipeline Storage Configuration
 
@@ -261,6 +264,17 @@ oc expose service configure-pipeline-notebook
 #### When using deployed S4
 
 The chart deploys S4, creates its `s4-credentials` Secret, and configures the DSPA and notebook secrets to use `s4.<namespace>.svc.cluster.local:7480`.
+
+To create a sample documents bucket and upload files with S4, enable `minio.sampleFileUpload` and provide its bucket and URLs. `configure-pipeline` runs the upload Job against S4. When MinIO is selected, the existing MinIO subchart Job performs the same upload.
+
+```yaml
+minio:
+  sampleFileUpload:
+    enabled: true
+    bucket: documents
+    urls:
+      - https://example.com/sample.pdf
+```
 
 #### When using deployed MinIO
 
