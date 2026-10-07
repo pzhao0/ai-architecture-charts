@@ -49,8 +49,6 @@ helm install configure-pipeline ./helm \
 helm install configure-pipeline ./helm \
   --set pipelineStorage.deployMinio=false \
   --set pipelineStorage.externalStorage.host="s3.amazonaws.com" \
-  --set pipelineStorage.externalStorage.port="443" \
-  --set pipelineStorage.externalStorage.scheme="https" \
   --set pipelineStorage.externalStorage.bucket="my-bucket" \
   --set pipelineStorage.externalStorage.s3CredentialsSecret.secretName="aws-credentials"
 ```
