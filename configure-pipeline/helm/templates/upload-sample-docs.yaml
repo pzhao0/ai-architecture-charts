@@ -1,4 +1,4 @@
-{{- if and .Values.pipelineStorage.deployAwsCompatibleStorage .Values.minio.sampleFileUpload.enabled }}
+{{- if .Values.sampleFileUpload.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -44,10 +44,10 @@ spec:
               urls = json.loads(os.environ["SAMPLE_URLS"])
               s3 = boto3.client(
                   "s3",
-                  endpoint_url="http://s4:7480",
+                  endpoint_url=os.environ["S3_ENDPOINT"],
                   aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
                   aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-                  region_name="us-east-1",
+                  region_name=os.environ["SAMPLE_REGION"],
                   config=Config(s3={"addressing_style": "path"}),
               )
 
@@ -87,20 +87,24 @@ spec:
           env:
             - name: HOME
               value: /tmp
+            - name: S3_ENDPOINT
+              value: {{ printf "%s://%s:%s" .Values.pipelineStorage.externalStorage.scheme .Values.pipelineStorage.externalStorage.host .Values.pipelineStorage.externalStorage.port | quote }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: s4-credentials
-                  key: AWS_ACCESS_KEY_ID
+                  name: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretName }}
+                  key: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: s4-credentials
-                  key: AWS_SECRET_ACCESS_KEY
+                  name: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretName }}
+                  key: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretKey }}
             - name: SAMPLE_BUCKET
-              value: {{ .Values.minio.sampleFileUpload.bucket | quote }}
+              value: {{ .Values.sampleFileUpload.bucket | quote }}
+            - name: SAMPLE_REGION
+              value: {{ .Values.sampleFileUpload.region | quote }}
             - name: SAMPLE_URLS
-              value: {{ .Values.minio.sampleFileUpload.urls | toJson | quote }}
+              value: {{ .Values.sampleFileUpload.urls | toJson | quote }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

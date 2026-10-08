@@ -43,21 +43,21 @@ spec:
               name: notebook-port
               protocol: TCP
           env:
-            - name: MINIO_ENDPOINT
+            - name: AWS_S3_ENDPOINT
               valueFrom:
                 secretKeyRef:
                   name: rag-pipeline-secrets
-                  key: MINIO_ENDPOINT
-            - name: MINIO_ACCESS_KEY
+                  key: AWS_S3_ENDPOINT
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: rag-pipeline-secrets
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_SECRET_KEY
+                  name: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretName }}
+                  key: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.accessKey }}
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: rag-pipeline-secrets
-                  key: MINIO_SECRET_KEY
+                  name: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretName }}
+                  key: {{ .Values.pipelineStorage.externalStorage.s3CredentialsSecret.secretKey }}
             - name: LLAMASTACK_BASE_URL
               valueFrom:
                 secretKeyRef:

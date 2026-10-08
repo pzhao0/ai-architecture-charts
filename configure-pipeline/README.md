@@ -6,7 +6,7 @@ This Helm chart deploys a Data Science Pipelines Application (DSPA) along with a
 
 The configure-pipeline chart creates:
 - A DataSciencePipelinesApplication (DSPA) for running data science workflows
-- Object storage (MinIO by default, optional S4-backed AWS-compatible or external S3-compatible storage)
+- S4-backed AWS-compatible storage by default, or external S3-compatible storage
 - Optional Jupyter notebook deployment for pipeline configuration
 - Persistent volume claims for data storage
 - Secrets for storage credentials and pipeline configuration
@@ -17,11 +17,11 @@ The configure-pipeline chart creates:
 - OpenShift cluster with OpenDataHub or RHOAI installed
 - Helm 3.x
 - Access to required container registries
-- Object storage (MinIO is deployed by default; S4 and external S3-compatible storage are also supported)
+- S3-compatible object storage (the bundled S4 service or an external endpoint)
 
 ## Installation
 
-### Basic Installation (with MinIO)
+### Basic Installation (with S4)
 
 ```bash
 helm install configure-pipeline ./helm
@@ -35,19 +35,11 @@ helm install configure-pipeline ./helm \
   --set notebook.repo="https://github.com/your-org/your-rag-repo.git"
 ```
 
-### Installation with S4-backed AWS-compatible storage
-
-```bash
-helm install configure-pipeline ./helm \
-  --set pipelineStorage.deployAwsCompatibleStorage=true \
-  --set pipelineStorage.deployMinio=false
-```
-
 ### Installation with External Storage
 
 ```bash
 helm install configure-pipeline ./helm \
-  --set pipelineStorage.deployMinio=false \
+  --set pipelineStorage.deployAwsCompatibleStorage=false \
   --set pipelineStorage.externalStorage.host="s3.amazonaws.com" \
   --set pipelineStorage.externalStorage.bucket="my-bucket" \
   --set pipelineStorage.externalStorage.s3CredentialsSecret.secretName="aws-credentials"
@@ -76,34 +68,32 @@ helm install configure-pipeline ./helm \
 | `notebook.embedding_model` | Embedding model to use | `all-MiniLM-L6-v2` |
 | `notebook.name` | RAG vector database name | `rag-vector-db` |
 | `notebook.version` | Version identifier | `1.0` |
-| `notebook.minio.region` | MinIO region for notebook | `us-east-1` |
-| `notebook.minio.bucket_name` | MinIO bucket name for notebook | `llama` |
+| `notebook.s3.region` | S3 region for notebook | `us-east-1` |
+| `notebook.s3.bucket_name` | S3 bucket name for notebook | `llama` |
+| `notebook.s3.accessKeyId` | External S3 access key for notebook data connection | `""` |
+| `notebook.s3.secretAccessKey` | External S3 secret key for notebook data connection | `""` |
 
-#### MinIO Subchart Configuration
+#### Sample Document Upload Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `minio.secret.user` | MinIO username | `minio_rag_user` |
-| `minio.secret.password` | MinIO password | `minio_rag_password` |
-| `minio.secret.host` | MinIO service host | `minio` |
-| `minio.secret.port` | MinIO service port | `9000` |
-| `minio.sampleFileUpload.enabled` | Create a sample documents bucket and upload configured URLs | `false` |
-| `minio.sampleFileUpload.bucket` | Bucket for sample document uploads | `documents` |
-| `minio.sampleFileUpload.urls` | URLs of sample documents to download and upload | `[]` |
+| `sampleFileUpload.enabled` | Create a bucket and upload configured URLs | `false` |
+| `sampleFileUpload.bucket` | Bucket for sample document uploads | `documents` |
+| `sampleFileUpload.region` | S3 region used for upload | `us-east-1` |
+| `sampleFileUpload.urls` | URLs of sample documents to download and upload | `[]` |
 
 #### Pipeline Storage Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `pipelineStorage.deployMinio` | Deploy MinIO as a dependency | `true` |
-| `pipelineStorage.deployAwsCompatibleStorage` | Deploy S4-backed AWS-compatible storage | `false` |
-| `pipelineStorage.externalStorage.host` | Storage host; bundled MinIO default | `minio` |
-| `pipelineStorage.externalStorage.port` | Storage port; bundled MinIO default | `9000` |
+| `pipelineStorage.deployAwsCompatibleStorage` | Deploy bundled S4-backed AWS-compatible storage | `true` |
+| `pipelineStorage.externalStorage.host` | Storage host | `s4` |
+| `pipelineStorage.externalStorage.port` | Storage port | `7480` |
 | `pipelineStorage.externalStorage.bucket` | Storage bucket for pipelines | `mlpipeline` |
 | `pipelineStorage.externalStorage.scheme` | Connection scheme (http/https) | `http` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `minio` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `user` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `password` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `s4-credentials` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `AWS_ACCESS_KEY_ID` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `AWS_SECRET_ACCESS_KEY` |
 
 ### Example values.yaml
 
@@ -111,7 +101,6 @@ helm install configure-pipeline ./helm \
 
 ```yaml
 pipelineStorage:
-  deployMinio: false
   deployAwsCompatibleStorage: true
   externalStorage:
     host: s4
@@ -124,45 +113,7 @@ pipelineStorage:
       secretKey: AWS_SECRET_ACCESS_KEY
 ```
 
-#### Example 2: Deploy with MinIO
-
-```yaml
-# MinIO credentials (used by minio chart and notebook)
-minio:
-  secret:
-    user: custom_user
-    password: custom_password
-    host: minio
-    port: "9000"
-
-notebook:
-  create: true
-  image: "quay.io/your-org/custom-notebook:latest"
-  repo: "https://github.com/your-org/custom-rag-repo.git"
-  pvcName: "custom-pipeline-vol"
-  embedding_model: sentence-transformers/all-MiniLM-L6-v2
-  name: custom-rag-db
-  version: 2.0
-  minio:
-    region: us-west-2
-    bucket_name: custom-bucket
-
-# Pipeline storage - deploy minio
-pipelineStorage:
-  deployMinio: true
-  deployAwsCompatibleStorage: false
-  externalStorage:
-    host: "minio"
-    port: "9000"
-    bucket: "mlpipeline"
-    scheme: "http"
-    s3CredentialsSecret:
-      secretName: "minio"
-      accessKey: "user"
-      secretKey: "password"
-```
-
-#### Example 3: Use External S3-Compatible Storage
+#### Example 2: Use External S3-Compatible Storage
 
 ```yaml
 notebook:
@@ -170,8 +121,7 @@ notebook:
 
 # Pipeline storage - use external storage
 pipelineStorage:
-  deployMinio: false  # Don't deploy minio
-  deployAwsCompatibleStorage: false  # Don't deploy S4
+  deployAwsCompatibleStorage: false
   externalStorage:
     host: "s3.us-west-2.amazonaws.com"
     port: "443"
@@ -188,7 +138,7 @@ pipelineStorage:
 After installation, the chart will create:
 
 1. **DataSciencePipelinesApplication (DSPA)**: A complete data science pipeline environment for running workflows
-2. **Object Storage**: Deployed S4, MinIO, or configured external S3-compatible storage
+2. **Object Storage**: Deployed S4 or configured external S3-compatible storage
 3. **Jupyter Notebook** (optional): Access your notebook environment for pipeline configuration
 4. **Storage**: Persistent volumes for data persistence
 5. **Secrets**: Storage credentials and pipeline configuration secrets
@@ -196,36 +146,15 @@ After installation, the chart will create:
 
 ### Storage Options
 
-The chart supports three mutually exclusive storage modes. MinIO remains the default so existing consumers retain their current behavior.
+The chart supports two storage modes.
 
 #### 1. Deployed S4
 
-When `pipelineStorage.deployAwsCompatibleStorage: true`, the chart deploys the `aws-compatible-storage` dependency with the service name `s4`. The DSPA and notebook secrets use its S3 endpoint on port `7480` and the `s4-credentials` Secret. The S4 UI Route is disabled because this chart uses the in-cluster S3 API only.
+When `pipelineStorage.deployAwsCompatibleStorage: true`, the chart deploys the `aws-compatible-storage` dependency with the service name `s4`. The DSPA and notebook use its S3 endpoint on port `7480` and the `s4-credentials` Secret. The S4 UI Route is disabled because this chart uses the in-cluster S3 API only.
 
-#### 2. Deployed MinIO (default)
+#### 2. External Storage
 
-When `pipelineStorage.deployMinio: true` and `pipelineStorage.deployAwsCompatibleStorage: false`, the chart deploys MinIO as a subchart dependency. This is suitable for:
-- Development and testing environments
-- Single-cluster deployments
-- When you don't have existing S3-compatible storage
-
-The deployed MinIO instance:
-- Runs in the same namespace as the pipeline
-- Creates a secret with credentials configured in `minio.secret`
-- Automatically configures the DSPA to use it (with namespace-qualified hostname)
-
-#### 3. External Storage
-
-When both deployment flags are `false`, the chart uses external S3-compatible storage. This is suitable for:
-- Production environments
-- AWS S3, Google Cloud Storage, Azure Blob Storage (with S3 compatibility)
-- External/shared MinIO instances
-- Multi-cluster deployments
-
-For external storage:
-- Set the host to the external endpoint (e.g., `s3.amazonaws.com`)
-- Configure credentials via an existing secret
-- The chart will NOT append the namespace to the hostname
+Set `pipelineStorage.deployAwsCompatibleStorage: false` to use an external S3-compatible service. Set `pipelineStorage.externalStorage` and point `s3CredentialsSecret` to an existing Secret. When the notebook is enabled, also set `notebook.s3.accessKeyId` and `notebook.s3.secretAccessKey` so the dashboard data connection Secret can be generated.
 
 ### Accessing the Data Science Pipeline
 
@@ -265,37 +194,27 @@ oc expose service configure-pipeline-notebook
 
 The chart deploys S4, creates its `s4-credentials` Secret, and configures the DSPA and notebook secrets to use `s4.<namespace>.svc.cluster.local:7480`.
 
-To create a sample documents bucket and upload files with S4, enable `minio.sampleFileUpload` and provide its bucket and URLs. `configure-pipeline` runs the upload Job against S4. When MinIO is selected, the existing MinIO subchart Job performs the same upload.
+To create a sample documents bucket and upload files, enable `sampleFileUpload` and provide its bucket and URLs. `configure-pipeline` runs an upload Job against the configured S3 endpoint.
 
 ```yaml
-minio:
-  sampleFileUpload:
-    enabled: true
-    bucket: documents
-    urls:
-      - https://example.com/sample.pdf
-```
-
-#### When using deployed MinIO
-
-The chart automatically:
-- Deploys MinIO via the subchart dependency
-- Creates a secret with credentials from `minio.secret`
-- Configures DSPA to use the deployed MinIO with namespace-qualified hostname (`minio.<namespace>`)
-- Configures notebook secret with MinIO access details
+sampleFileUpload:
+  enabled: true
+  bucket: documents
+  urls:
+    - https://example.com/sample.pdf
 
 #### When using external storage
 
 Ensure you:
 - Create a secret with your S3 credentials before installing the chart
 - Configure `pipelineStorage.externalStorage` to point to your external storage endpoint
-- Set `pipelineStorage.deployMinio: false`
+- Set `pipelineStorage.deployAwsCompatibleStorage: false`
 - The secret should contain the keys specified in `s3CredentialsSecret.accessKey` and `s3CredentialsSecret.secretKey`
 
 ### Pipeline Configuration
 
 The notebook environment includes:
-- Pre-configured MinIO access
+- Pre-configured S3 access
 - RAG pipeline templates
 - Embedding model configuration
 - Vector database setup scripts
@@ -322,12 +241,10 @@ oc logs -l app.kubernetes.io/name=configure-pipeline -f
    - Check resource limits
 
 2. **Storage connection issues**:
-   - If using deployed S4: Verify the `s4` pod is running
-   - If using deployed MinIO: Verify the MinIO pod is running
+   - If using bundled S4: Verify the `s4` pod is running
    - If using external storage: Check credentials secret exists and contains correct keys
    - Verify DSPA can reach the storage endpoint (check DSPA pod logs)
    - Validate bucket exists and credentials have appropriate permissions
-   - For deployed MinIO, ensure the namespace is correctly appended to the hostname
 
 3. **Storage issues**: 
    - Ensure sufficient storage is available for PVCs
@@ -375,7 +292,7 @@ oc delete pvc -l app.kubernetes.io/name=configure-pipeline
 ## Dependencies
 
 - **OpenDataHub or RHOAI**: Required for DataSciencePipelinesApplication CRD
-- **Object storage**: Deploy MinIO (default), S4, or provide external S3-compatible storage
+- **Object storage**: Deploy S4 (default) or provide external S3-compatible storage
 - **Git repository access**: For notebook code and templates (if notebook.create is enabled)
 - **Sufficient cluster resources**: CPU, memory, and storage
 - **Container registry access**: For pulling notebook and storage images
@@ -385,8 +302,7 @@ oc delete pvc -l app.kubernetes.io/name=configure-pipeline
 
 This chart has the following subchart dependency:
 
-- **minio** (version 0.5.5): Deployed by default when `pipelineStorage.deployMinio: true`
-- **aws-compatible-storage** (version 0.1.0): Conditionally deployed when `pipelineStorage.deployAwsCompatibleStorage: true`
+- **aws-compatible-storage** (version 0.1.0): Deployed by default when `pipelineStorage.deployAwsCompatibleStorage: true`
 
 ## Integration
 
@@ -395,6 +311,5 @@ This chart works well with other components in the AI architecture:
 - **ingestion-pipeline**: For data processing workflows
 - **llama-stack** / **ogx-ai**: For LLM inference and orchestration capabilities
 - **pgvector**: For vector storage
-- **minio**: For object storage
 
 Deploy these components in the same namespace for optimal integration.
