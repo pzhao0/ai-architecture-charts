@@ -87,13 +87,13 @@ helm install configure-pipeline ./helm \
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `pipelineStorage.deployAwsCompatibleStorage` | Deploy bundled S4-backed AWS-compatible storage | `true` |
-| `pipelineStorage.externalStorage.host` | Storage host | `s4` |
-| `pipelineStorage.externalStorage.port` | Storage port | `7480` |
+| `pipelineStorage.externalStorage.host` | External storage host | `minio` |
+| `pipelineStorage.externalStorage.port` | External storage port | `9000` |
 | `pipelineStorage.externalStorage.bucket` | Storage bucket for pipelines | `mlpipeline` |
 | `pipelineStorage.externalStorage.scheme` | Connection scheme (http/https) | `http` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `s4-credentials` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `AWS_ACCESS_KEY_ID` |
-| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `AWS_SECRET_ACCESS_KEY` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretName` | Secret name for S3 credentials | `minio` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.accessKey` | Access key field in secret | `user` |
+| `pipelineStorage.externalStorage.s3CredentialsSecret.secretKey` | Secret key field in secret | `password` |
 
 ### Example values.yaml
 
@@ -154,7 +154,7 @@ When `pipelineStorage.deployAwsCompatibleStorage: true`, the chart deploys the `
 
 #### 2. External Storage
 
-Set `pipelineStorage.deployAwsCompatibleStorage: false` to use an external S3-compatible service. Set `pipelineStorage.externalStorage` and point `s3CredentialsSecret` to an existing Secret. When the notebook is enabled, also set `notebook.s3.accessKeyId` and `notebook.s3.secretAccessKey` so the dashboard data connection Secret can be generated.
+Set `pipelineStorage.deployAwsCompatibleStorage: false` to use an external S3-compatible service. The existing `pipelineStorage.externalStorage` defaults are retained; override the endpoint and point `s3CredentialsSecret` to an existing Secret as needed. When the notebook is enabled, also set `notebook.s3.accessKeyId` and `notebook.s3.secretAccessKey` so the dashboard data connection Secret can be generated.
 
 ### Accessing the Data Science Pipeline
 
